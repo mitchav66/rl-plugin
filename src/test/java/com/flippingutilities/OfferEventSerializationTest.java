@@ -26,6 +26,11 @@ public class OfferEventSerializationTest
 		return new JsonParser().parse(gson.toJson(offer)).getAsJsonObject();
 	}
 
+	/**
+	 * The core guarantee: the two prices survive a round trip as separate fields. `p` remains
+	 * the average execution price and `lp` carries the exact price the offer was listed at, so
+	 * a live offer that has filled nothing still persists a usable price.
+	 */
 	@Test
 	public void listedPriceIsPersistedSeparatelyFromExecutionPrice()
 	{
@@ -65,6 +70,11 @@ public class OfferEventSerializationTest
 		assertEquals(91, restored.getListedPrice());
 	}
 
+	/**
+	 * Backward compatibility: account files written before `lp` existed simply omit the key,
+	 * and must keep deserializing. The field reads 0, which is the sentinel for "no listed
+	 * price recorded" — the same value an offer carried under the old transient behaviour.
+	 */
 	@Test
 	public void oldAccountFilesDefaultListedPriceToUnknown()
 	{
